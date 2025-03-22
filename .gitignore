@@ -166,7 +166,7 @@ staticfiles/
 static/
 
 # Explicitly allow the specific JavaScript file
-!static/admin/js/administrative_dropdown.js
-!staticfiles/admin/js/administrative_dropdown.js
+!static/admin/js/location_dropdown.js
+!staticfiles/admin/js/location_dropdown.js
 
 logs/

@@ -30,6 +30,9 @@ class BaseService(Generic[T]):
             self.model = model
         if self.model is None:
             raise ValueError("Model không được định nghĩa cho service này")
+    
+    def get_queryset(self):
+        return self.model.objects.all()
 
     def get_objects(
         self,
@@ -86,7 +89,7 @@ class BaseService(Generic[T]):
             q_filters &= search_query
 
         # Thực hiện truy vấn
-        objects = self.model.objects
+        objects = self.get_queryset()
 
         if prefetch_related:
             objects = objects.prefetch_related(*prefetch_related)
@@ -125,7 +128,7 @@ class BaseService(Generic[T]):
         Raises:
             model.DoesNotExist: Nếu không tìm thấy đối tượng
         """
-        objects = self.model.objects
+        objects = self.get_queryset()
 
         if prefetch_related:
             objects = objects.prefetch_related(*prefetch_related)
@@ -153,7 +156,7 @@ class BaseService(Generic[T]):
         Raises:
             model.DoesNotExist: Nếu không tìm thấy đối tượng
         """
-        objects = self.model.objects
+        objects = self.get_queryset()
 
         if prefetch_related:
             objects = objects.prefetch_related(*prefetch_related)
@@ -173,7 +176,7 @@ class BaseService(Generic[T]):
         Returns:
             bool: True nếu đối tượng tồn tại, ngược lại False
         """
-        return self.model.objects.filter(**kwargs).exists()
+        return self.get_queryset().filter(**kwargs).exists()
 
     def create(self, **kwargs) -> T:
         """
@@ -185,7 +188,7 @@ class BaseService(Generic[T]):
         Returns:
             T: Đối tượng đã được tạo
         """
-        instance = self.model.objects.create(**kwargs)
+        instance = self.get_queryset().create(**kwargs)
         return instance
 
     def update(self, instance: T, **kwargs) -> T:
@@ -229,7 +232,7 @@ class BaseService(Generic[T]):
         self.delete(instance)
 
     @property
-    def current_user(self) -> Optional[Literal[User, Customer]]:
+    def current_user(self) -> Optional[Any]:
         """
         Lấy người dùng hiện tại từ request
 

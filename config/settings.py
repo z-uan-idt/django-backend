@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "apps.extentions",
     "apps.accounts",
 ]
 
@@ -59,7 +60,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -77,13 +78,17 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "USER": config("POSTGRES_USER", cast=str),
-        "HOST": config("POSTGRES_HOST", cast=str),
-        "PORT": config("POSTGRES_PORT", cast=str),
-        "NAME": config("POSTGRES_DBNAME", cast=str),
-        "PASSWORD": config("POSTGRES_PASS", cast=str),
-    }
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": "pharmago",
+    },
+    # "default": {
+    #     "ENGINE": "django.db.backends.postgresql",
+    #     "USER": config("POSTGRES_USER", cast=str),
+    #     "HOST": config("POSTGRES_HOST", cast=str),
+    #     "PORT": config("POSTGRES_PORT", cast=str),
+    #     "NAME": config("POSTGRES_DBNAME", cast=str),
+    #     "PASSWORD": config("POSTGRES_PASS", cast=str),
+    # }
 }
 
 REDIS_HOST = config("REDIS_HOST", default=None, cast=str)
@@ -140,6 +145,19 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.AdminUser"
 
+# JWT CONFIG
+JWT_CONFIG = {
+    "ALGORITHM": "HS256",
+    "USER_CLAIM": "user_id",
+    "SIGNING_KEY": SECRET_KEY,
+    "AUTH_HEADER_TYPE": "Bearer",
+    "CUSTOMER_CLAIM": "customer_id",
+    "AUTH_SYSTEM_NAME": "HTTP_SYSTEM",
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "TOKEN_LIFETIME": timedelta(minutes=config("TOKEN_LIFETIME", cast=int, default=5)),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=config("REFRESH_TOKEN_LIFETIME", cast=int, default=30)),
+}
+
 # Swagger
 SWAGGER_SETTINGS = {
     "PERSIST_AUTH": True,
@@ -148,50 +166,18 @@ SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
         "Bearer": {
             "type": "apiKey",
-            "name": "Authorization",
+            "name": "authorization",
             "in": "header",
         },
         "System": {
             "type": "apiKey",
-            "name": "System",
+            "name": "system",
             "in": "header",
         }
     },
     "USE_SESSION_AUTH": False,
     "FORCE_SCRIPT_NAME": "/",
     "DOC_EXPANSION": "none",
-}
-
-# JWT
-ACCESS_TOKEN_LIFETIME = config("ACCESS_TOKEN_LIFETIME", cast=int, default=5)
-
-REFRESH_TOKEN_LIFETIME = config("REFRESH_TOKEN_LIFETIME", cast=int, default=30)
-
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=ACCESS_TOKEN_LIFETIME),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=REFRESH_TOKEN_LIFETIME),
-    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=ACCESS_TOKEN_LIFETIME),
-    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=REFRESH_TOKEN_LIFETIME),
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": False,
-    "UPDATE_LAST_LOGIN": False,
-    "ALGORITHM": "HS256",
-    "SIGNING_KEY": SECRET_KEY,
-    "VERIFYING_KEY": None,
-    "AUDIENCE": None,
-    "ISSUER": None,
-    "JWK_URL": None,
-    "LEEWAY": 0,
-    "AUTH_HEADER_TYPES": ("Bearer",),
-    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "USER_ID_FIELD": "id",
-    "USER_ID_CLAIM": "user_id",
-    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-    "TOKEN_TYPE_CLAIM": "token_type",
-    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
-    "JTI_CLAIM": "jti",
-    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
 }
 
 # File size
@@ -250,8 +236,11 @@ LOGGING = {
         },
     },
     "filters": {
-        "mode_filter_logging": {
-            "()": "utils.logging.ModeFilterLogging",
+        "production_filter_logging": {
+            "()": "utils.logging.ProductionFilterLogging",
+        },
+        "debug_filter_logging": {
+            "()": "utils.logging.DebugFilterLogging",
         },
         "filter_logging": {
             "()": "utils.logging.FilterLogging",
@@ -262,7 +251,7 @@ LOGGING = {
             "level": "INFO",
             "class": "logging.StreamHandler",
             "formatter": "colored",
-            "filters": ["mode_filter_logging", "filter_logging"],
+            "filters": ["debug_filter_logging", "filter_logging"],
         },
         "error_file": {
             "level": "ERROR",
@@ -272,6 +261,7 @@ LOGGING = {
             "backupCount": 10,
             "formatter": "verbose",
             "encoding": "utf-8",
+            "filters": ["production_filter_logging"],
         },
     },
     "loggers": {

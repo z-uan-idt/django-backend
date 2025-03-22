@@ -1,21 +1,20 @@
-from django.db import transaction
-
+from utils.permissions import Authenticated
 from utils.views import APIGenericView
 from utils.decorators import api
+
+from django.db import transaction
 
 from ..serializers.customer import request_serializer, response_serializer
 
 from ..services.customer_service import CustomerService
+
+from helpers.token_helper import Token
 
 
 SWAGGER_TAGS = ["Accounts: Customer"]
 
 
 class CustomerAPIGenericView(APIGenericView):
-    authentication_action_classes = {}
-    permission_action_classes = {}
-    authentication_classes = ()
-    permission_classes = ()
     
     action_serializers = {
         'list_response': response_serializer.CustomerShortDetailSerializer,

@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group
 from django.contrib import admin
 from django import forms
 
-from django.core.exceptions import ValidationError
+import re
 
 from .models import AdminUser, Customer, User
 
@@ -39,17 +39,31 @@ class UserAdmin(admin.ModelAdmin):
     list_filter = ('type', 'status', 'gender', 'is_delete')
     autocomplete_fields = ('updated_by', 'created_by')
     search_fields = ('full_name', 'phone_number', 'code', 'email')
-    list_display = ('id', 'code', 'phone_number', 'full_name', 'email', 'type', 'gender', 'status', 'is_delete')
+    list_display = ('id', 'code', 'masked_phone_number', 'full_name', 'email', 'type', 'gender', 'status', 'is_delete')
     readonly_fields = ('updated_at', 'created_at', 'deleted_at', 'is_delete', 'deleted_by', 'code')
 
     form = UserAdminForm
+    
+    def get_exclude(self, request, obj = None):
+        exclude = super().get_exclude(request, obj)
+        if obj and obj.is_delete:
+            obj.phone_number = re.sub(f'__deleted__{obj.pk}', '', obj.phone_number)
+            obj.password = None
+        return exclude
+    
+    def masked_phone_number(self, obj):
+        if not obj.is_delete:
+            return obj.phone_number
+        return re.sub(f'__deleted__{obj.pk}', '', obj.phone_number)
+    
+    masked_phone_number.short_description = 'Số điện thoại'
 
     def get_queryset(self, request):
         path_info = request.path_info
         is_detail_view = '/change/' in path_info
         queryset = super().get_queryset(request).select_related('updated_by', 'created_by')
         
-        if is_detail_view or  "is_delete__exact" in request.GET:
+        if is_detail_view or "is_delete__exact" in request.GET:
             return queryset
 
         return queryset.filter(is_delete=False)
@@ -100,17 +114,32 @@ class CustomerAdmin(admin.ModelAdmin):
     list_per_page = 15
 
     ordering = ('-created_at',)
+    autocomplete_fields = ('representative',)
     list_filter = ('status', 'gender', 'is_delete')
     search_fields = ('full_name', 'phone_number', 'code', 'email')
-    list_display = ('id', 'code', 'phone_number', 'full_name', 'email', 'gender', 'status', 'is_delete')
+    list_display = ('id', 'code', 'masked_phone_number', 'full_name', 'email', 'gender', 'status', 'is_delete')
     readonly_fields = ('updated_at', 'created_at', 'deleted_at', 'is_delete', 'code')
 
     form = CustomerAdminForm
+    
+    def get_exclude(self, request, obj = None):
+        exclude = super().get_exclude(request, obj)
+        if obj and obj.is_delete:
+            obj.phone_number = re.sub(f'__deleted__{obj.pk}', '', obj.phone_number)
+            obj.password = None
+        return exclude
+    
+    def masked_phone_number(self, obj):
+        if not obj.is_delete:
+            return obj.phone_number
+        return re.sub(f'__deleted__{obj.pk}', '', obj.phone_number)
+    
+    masked_phone_number.short_description = 'Số điện thoại'
 
     def get_queryset(self, request):
         path_info = request.path_info
         is_detail_view = '/change/' in path_info
-        queryset = super().get_queryset(request).select_related('updated_by', 'created_by')
+        queryset = super().get_queryset(request)
         
         if is_detail_view or  "is_delete__exact" in request.GET:
             return queryset
@@ -167,8 +196,12 @@ class AdminUserAdmin(admin.ModelAdmin):
     list_display = ('id', 'username', 'full_name')
 
     form = AdminUserAdminForm
-    
-    def has_delete_permission(self, *args, **kwargs):
+
+    def has_delete_permission(self, request, obj=None):
+        if obj:
+            master_user = AdminUser.objects.only("id").last()
+            if master_user:
+                return master_user.id != obj.id
         return False
 
 

@@ -12,18 +12,16 @@ from .utils.validators import validate_phone_number
 
 class User(AbstractBaseUser, BaseModelSoftDelete):
     phone_number = models.CharField(
-        error_messages=ErrorMessages.CharField('Số điện thoại', 255),
+        error_messages=ErrorMessages.CharField('Số điện thoại', 128),
         validators=[validate_phone_number],
         verbose_name='Số điện thoại',
-        max_length=255,
+        max_length=128,
         unique=True,
     )
     password = models.CharField(
-        error_messages=ErrorMessages.CharField('Mật khẩu', 255),
+        error_messages=ErrorMessages.CharField('Mật khẩu', 128),
         verbose_name='Mật khẩu',
-        max_length=255,
-        blank=True,
-        null=True
+        max_length=128,
     )
     code = models.CharField(
         error_messages=ErrorMessages.CharField('Mã người dùng', 100),
@@ -130,7 +128,7 @@ class User(AbstractBaseUser, BaseModelSoftDelete):
         ]
 
     def __str__(self):
-        return "{}: {} | {}".format(self.pk, self.code, self.full_name, self.phone_number)
+        return "{}: {} - {}".format(self.pk, self.full_name, self.phone_number)
     
     def generate_code(self, digit_length=5, commit=True):
         if self.pk and not self.code:

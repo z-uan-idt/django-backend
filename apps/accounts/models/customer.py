@@ -1,5 +1,7 @@
 from django.db import models
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.models import AbstractBaseUser
+from django_currentuser.middleware import get_current_user
 
 from datetime import datetime
 
@@ -12,21 +14,19 @@ from .utils.validators import validate_phone_number
 
 class Customer(AbstractBaseUser, BaseModelSoftDelete):
     phone_number = models.CharField(
-        error_messages=ErrorMessages.CharField('Số điện thoại', 255),
+        error_messages=ErrorMessages.CharField('Số điện thoại', 128),
         validators=[validate_phone_number],
         verbose_name='Số điện thoại',
-        max_length=255,
+        max_length=128,
         unique=True,
     )
     password = models.CharField(
-        error_messages=ErrorMessages.CharField('Mật khẩu', 255),
+        error_messages=ErrorMessages.CharField('Mật khẩu', 128),
         verbose_name='Mật khẩu',
-        max_length=255,
-        blank=True,
-        null=True
+        max_length=128,
     )
     code = models.CharField(
-        error_messages=ErrorMessages.CharField('Mã khách hàng', 20),
+        error_messages=ErrorMessages.CharField('Mã khách hàng', 100),
         verbose_name='Mã khách hàng',
         max_length=100,
         blank=True,
@@ -69,6 +69,14 @@ class Customer(AbstractBaseUser, BaseModelSoftDelete):
         verbose_name='Trạng thái khách hàng',
         max_length=100,
     )
+    representative = models.ForeignKey(
+        null=True,
+        blank=True,
+        to="accounts.User",
+        on_delete=models.SET_NULL,
+        verbose_name='Người đại diện',
+        related_name="customer_representative",
+    )
 
     REQUIRED_FIELDS = ["full_name"]
     USERNAME_FIELD = "phone_number"
@@ -100,7 +108,7 @@ class Customer(AbstractBaseUser, BaseModelSoftDelete):
         ]
 
     def __str__(self):
-        return "{}: {} | {}".format(self.pk, self.code, self.full_name, self.phone_number)
+        return "{}: {} - {}".format(self.pk, self.full_name, self.phone_number)
     
     def generate_code(self, prefix = "KH", digit_length=5, commit=True):
         if self.pk and not self.code:
@@ -118,6 +126,11 @@ class Customer(AbstractBaseUser, BaseModelSoftDelete):
 
             if self.is_delete and self.phone_number and not self.phone_number.endswith(deleted_flag):
                 self.phone_number = f"{self.phone_number}{deleted_flag}"
+        
+        if not self.pk and not self.representative:
+            current_user = get_current_user()
+            if self.get_related_model('representative', current_user):
+                self.representative = current_user
         
         super().save(*args, **kwargs)
         

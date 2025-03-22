@@ -13,6 +13,13 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+        
+    def get_related_model(self, field, current_user=None):
+        deleted_by_field = self._meta.get_field(field)
+        related_model = deleted_by_field.related_model
+        if not current_user:
+            return related_model
+        return isinstance(current_user, related_model)
 
     def save(self, *args, **kwargs):
         """
@@ -27,19 +34,18 @@ class BaseModel(models.Model):
         current_user = None
         if hasattr(self, "created_by") or hasattr(self, "updated_by"):
             current_user = get_current_user()
-            auth_user_model = current_user.__class__.__name__
-            if auth_user_model == "AdminUser":
-                current_user = None
         
         is_login = current_user and not isinstance(current_user, AnonymousUser)
 
         # Xử lý trường created_by nếu có
         if hasattr(self, "created_by") and is_login and self.created_by is None:
-            setattr(self, "created_by", current_user)
+            if self.get_related_model('created_by', current_user):
+                setattr(self, "created_by", current_user)
 
         # Xử lý trường updated_by nếu có
         if hasattr(self, "updated_by") and is_update and is_login:
-            setattr(self, "updated_by", current_user)
+            if self.get_related_model('updated_by', current_user):
+                setattr(self, "updated_by", current_user)
 
         super(BaseModel, self).save(*args, **kwargs)
 
@@ -89,9 +95,7 @@ class BaseModelSoftDelete(BaseModel):
         if hasattr(self, "deleted_by"):
             current_user = get_current_user()
             if current_user and not isinstance(current_user, AnonymousUser):
-                auth_user_model = current_user.__class__.__name__
-                if auth_user_model != "AdminUser":
-                    self.deleted_by = current_user
+                if self.get_related_model('deleted_by', current_user):
                     self.deleted_by = current_user
 
         super(BaseModelSoftDelete, self).save()
@@ -104,8 +108,7 @@ class BaseModelSoftDelete(BaseModel):
             if hasattr(self, "deleted_by"):
                 current_user = get_current_user()
                 if current_user and not isinstance(current_user, AnonymousUser):
-                    auth_user_model = current_user.__class__.__name__
-                    if auth_user_model != "AdminUser":
+                    if self.get_related_model('deleted_by', current_user):
                         self.deleted_by = current_user
 
         if not self.is_delete and self.deleted_at is not None:

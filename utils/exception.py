@@ -374,7 +374,7 @@ def ExceptionHandler(exc, context):
 
         return "\n         ".join(formatted_value)
 
-    short_traceback = ":\n         " + format_traceback(_traceback)
+    short_traceback = (":\n         " + format_traceback(_traceback)) if _traceback else ""
     logger.error(
         f'"{request.method} {request.get_full_path()} {http_version}" {status_code}{short_traceback}',
         extra={

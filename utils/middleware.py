@@ -1,21 +1,28 @@
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-
 from django.utils.deprecation import MiddlewareMixin
-from django.contrib.auth.models import AnonymousUser
-from django.conf import settings
 from django.apps import apps
 
-import jwt
+from config.settings import JWT_CONFIG
 
-from helpers import bigger, smaller
+from helpers.token_helper import HttpSystem
 
 
 class MultiTableAuthMiddleware(MiddlewareMixin):
-
+    
     def process_request(self, request):
-        request.system = request.META.get('HTTP_SYSTEM', 'manage')
-        
-        if request.system == 'customer':
+        key, value = self.get_auth_system_name(request)
+
+        setattr(request, key, value)
+
+        if getattr(request, key) == HttpSystem.CUSTOMER:
             request.auth_model = apps.get_model('accounts', 'Customer')
         else:
             request.auth_model = apps.get_model('accounts', 'User')
+            
+    def get_auth_system_name(self, request):
+        key = JWT_CONFIG.get("AUTH_SYSTEM_NAME", "HTTP_SYSTEM")
+        value = request.META.get(key, HttpSystem.MANAGE)
+
+        if value not in [HttpSystem.CUSTOMER, HttpSystem.MANAGE]:
+            value = HttpSystem.MANAGE
+        
+        return key, value

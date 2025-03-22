@@ -1,7 +1,8 @@
-from django.db import transaction
-
+from utils.permissions import Authenticated
 from utils.views import APIGenericView
 from utils.decorators import api
+
+from django.db import transaction
 
 from ..serializers.user import request_serializer, response_serializer
 
@@ -12,10 +13,7 @@ SWAGGER_TAGS = ["Accounts: User"]
 
 
 class UserAPIGenericView(APIGenericView):
-    authentication_action_classes = {}
-    permission_action_classes = {}
-    authentication_classes = ()
-    permission_classes = ()
+    permission_classes = [Authenticated.Manage]
     
     action_serializers = {
         'list_response': response_serializer.UserShortDetailSerializer,

@@ -44,7 +44,6 @@ class APIGenericView(
     permission_classes = []  # Default là không yêu cầu quyền
     permission_action_classes = {}  # Map action -> permissions
     renderer_classes = [JSONRenderer]  # Default renderer
-    authentication_action_classes = {}  # Map action -> authentication
 
     def get_permissions(self):
         """
@@ -58,22 +57,6 @@ class APIGenericView(
             return [permission() for permission in actions]
 
         return [permission() for permission in self.permission_classes]
-
-    def get_authenticators(self):
-        """
-        Lấy danh sách authenticators dựa trên action hiện tại
-
-        Returns:
-            list: Danh sách các authentication instance
-        """
-        if (
-            hasattr(self, "action")
-            and self.action in self.authentication_action_classes
-        ):
-            actions = self.authentication_action_classes[self.action]
-            return [auth() for auth in actions]
-
-        return [auth() for auth in self.authentication_classes]
 
     @transaction.atomic
     def perform_create(self, serializer):

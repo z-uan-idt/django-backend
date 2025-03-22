@@ -71,6 +71,11 @@ class FilterLogging(logging.Filter):
         return super().filter(record)
 
 
-class ModeFilterLogging(logging.Filter):
+class ProductionFilterLogging(logging.Filter):
+    def filter(self, record):
+        return not AppMode.DEBUG
+
+
+class DebugFilterLogging(logging.Filter):
     def filter(self, record):
         return AppMode.DEBUG

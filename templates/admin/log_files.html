@@ -1,0 +1,48 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style type="text/css">
+  .log-actions a {
+    display: inline-block;
+    margin-right: 10px;
+    padding: 8px 15px;
+    background-color: #417690;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+  }
+  
+  .log-actions a:hover {
+    background-color: #2b5070;
+  }
+</style>
+{% endblock %}
+{% block content %}
+{% if log_files %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="text-align: left; border-bottom: 1px solid #ddd; padding: 8px;">Tên File</th>
+                <th style="text-align: left; border-bottom: 1px solid #ddd; padding: 8px;">Ngày</th>
+                <th style="text-align: left; border-bottom: 1px solid #ddd; padding: 8px;">Kích thước</th>
+                <th style="text-align: left; border-bottom: 1px solid #ddd; padding: 8px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for log in log_files %}
+            <tr>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px; vertical-align: middle">{{ log.filename }}</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px; vertical-align: middle">{{ log.date }}</td>
+                <td style="border-bottom: 1px solid #ddd; padding: 8px; vertical-align: middle">{{ log.size }}</td>
+                <td class="log-actions" style="border-bottom: 1px solid #ddd; padding: 8px; width: 50px">
+                    <a href="{% url 'admin_log_file_detail' log.filename %}">Xem</a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No log files found.</p>
+{% endif %}
+{% endblock %}

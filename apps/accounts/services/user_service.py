@@ -10,3 +10,6 @@ class UserService(BaseService[User]):
     def __init__(self):
         self.model = User
         super().__init__()
+    
+    def get_queryset(self):
+        return super().get_queryset().filter(is_delete=False)

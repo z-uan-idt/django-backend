@@ -25,19 +25,13 @@ class AdminUser(AbstractUser):
     )
 
     # Loại bỏ
-    email = None
-    last_name = None
-    first_name = None
-    date_joined = None
-    user_permissions = None
-    groups = None
+    EMAIL_FIELD, user_permissions, groups = None, None, None
+    email, last_name, first_name = None, None, None
+    last_login, date_joined = None, None
 
     # Mặc định
-    is_staff = True
-    is_active = True
-    is_superuser = True
+    is_staff, is_active, is_superuser = True, True, True
 
-    EMAIL_FIELD = None
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["full_name"]
 
@@ -48,3 +42,6 @@ class AdminUser(AbstractUser):
         verbose_name = "Tài khoản quản trị hệ thống"
         verbose_name_plural = "Tài khoản quản trị hệ thống"
         ordering = ["-id"]
+
+    def __str__(self):
+        return "{}: {} {}".format(self.pk, self.username, self.full_name)
