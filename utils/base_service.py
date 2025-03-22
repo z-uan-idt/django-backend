@@ -1,11 +1,14 @@
+from django.apps import apps
 from django.db.models import QuerySet, Model, Q
 from django.contrib.auth.models import AnonymousUser
 from django_currentuser.middleware import get_current_user
 
-from typing import TypeVar, Generic, Optional, Any, Type, List
+from typing import TypeVar, Generic, Optional, Any, Type, List, Literal
 
 
 T = TypeVar("T", bound=Model)
+User = apps.get_model("accounts", "User")
+Customer = apps.get_model("accounts", "Customer")
 
 
 class BaseService(Generic[T]):
@@ -226,14 +229,36 @@ class BaseService(Generic[T]):
         self.delete(instance)
 
     @property
-    def current_user(self) -> Optional[Any]:
+    def current_user(self) -> Optional[Literal[User, Customer]]:
         """
         Lấy người dùng hiện tại từ request
 
         Returns:
-            Optional[AbstractUser]: Người dùng hiện tại hoặc None
+            Optional[User]: Người dùng SYSTEM: manage
+        Returns:
+            Optional[Customer]: Người dùng SYSTEM: customer
+            Returns:
+                None
         """
         return get_current_user()
+
+    @property
+    def current_user_system(self) -> Optional[Literal["manage", "customer"]]:
+        """
+        Lấy loại người dùng hiện tại
+
+        Returns:
+            "manage" | "customer" | None
+        """
+        current_user = self.current_user
+
+        if isinstance(current_user, User):
+            return "manage"
+
+        if isinstance(current_user, Customer):
+            return "customer"
+
+        return None
 
     @property
     def is_authenticated(self) -> bool:
