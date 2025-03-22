@@ -1,4 +1,4 @@
-# Pharma Go Backend
+# PharmaGo Backend
 
 ## Installation
 ### 1. Clone project
