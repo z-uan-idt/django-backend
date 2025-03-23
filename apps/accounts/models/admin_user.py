@@ -1,9 +1,9 @@
-from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 from constants.error_messages import ErrorMessages
 
-from .utils.manager import AdminUserManager
+from .utils.managers import AdminUserManager
 
 
 class AdminUser(AbstractUser):
@@ -24,16 +24,13 @@ class AdminUser(AbstractUser):
         max_length=255,
     )
 
-    # Loại bỏ
     EMAIL_FIELD, user_permissions, groups = None, None, None
+    is_staff, is_active, is_superuser = True, True, True
     email, last_name, first_name = None, None, None
     last_login, date_joined = None, None
 
-    # Mặc định
-    is_staff, is_active, is_superuser = True, True, True
-
-    USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["full_name"]
+    USERNAME_FIELD = "username"
 
     objects = AdminUserManager()
 

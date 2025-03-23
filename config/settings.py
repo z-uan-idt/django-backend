@@ -1,13 +1,12 @@
-import os
 from datetime import datetime, timedelta
-from pathlib import Path
-
 from decouple import Csv, config
+from pathlib import Path
+import os
 
 from config.tasks import TASK_SCHEDULE
 
 
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,6 +26,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "apps.extentions",
     "apps.accounts",
+    "apps.workspace",
 ]
 
 MIDDLEWARE = [
@@ -53,7 +53,14 @@ REST_FRAMEWORK = {
     ],
 }
 
+# Security Settings
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+
+# CORS Settings
 CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = "config.urls"
 
@@ -95,14 +102,27 @@ REDIS_HOST = config("REDIS_HOST", default=None, cast=str)
 
 REDIS_PORT = config("REDIS_PORT", default=None, cast=str)
 
-if REDIS_HOST is not None and REDIS_PORT is not None:
+if REDIS_HOST and REDIS_PORT:
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
             "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
-            "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "SOCKET_CONNECT_TIMEOUT": 5,
+                "SOCKET_TIMEOUT": 5,
+                "RETRY_ON_TIMEOUT": True,
+            },
         }
     }
+    
+    # Cache timeout settings
+    CACHE_TTL = 60 * 15  # 15 minutes
+    CACHE_MIDDLEWARE_SECONDS = CACHE_TTL
+    
+    # Session cache
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
 
     CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/1"
     CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/1"
@@ -112,7 +132,7 @@ if REDIS_HOST is not None and REDIS_PORT is not None:
     CELERY_TIMEZONE = "Asia/Ho_Chi_Minh"
     CELERY_BEAT_SCHEDULE = TASK_SCHEDULE
 
-MONGO_URI = config("MONGO_URI", cast=str, default="")
+MONGO_URI = config("MONGO_URI", cast=str, default=None)
 
 if MONGO_URI:
     from pymongo import MongoClient

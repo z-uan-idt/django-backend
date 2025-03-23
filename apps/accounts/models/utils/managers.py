@@ -11,7 +11,10 @@ class AdminUserManager(BaseUserManager):
 
     def create_superuser(self, username, full_name, password, **extra_fields):
         return self.create_user(
-            full_name=full_name, username=username, password=password, **extra_fields
+            full_name=full_name,
+            username=username,
+            password=password,
+            **extra_fields
         )
 
     def get_by_natural_key(self, username):

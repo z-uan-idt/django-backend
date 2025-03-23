@@ -8,7 +8,7 @@ class GenderChoices(models.TextChoices):
 
 
 class UserTypeChoices(models.TextChoices):
-    ADMIN = 'ADMIN', 'Admin'
+    ADMIN = 'ADMIN', 'Quản trị viên'
     STAFF = 'STAFF', 'Nhân viên'
     MANAGER = 'MANAGER', 'Quản lý'
     PHARMACY = 'PHARMACY', 'Nhà thuốc'
@@ -19,14 +19,14 @@ class UserTypeChoices(models.TextChoices):
     
     def prefix(type: str):
         return {
-            UserTypeChoices.ADMIN: 'AD',
-            UserTypeChoices.STAFF: 'ST',
-            UserTypeChoices.MANAGER: 'MA',
-            UserTypeChoices.PHARMACY: 'PH',
-            UserTypeChoices.SUPPLIER: 'SU',
-            UserTypeChoices.PARTNER: 'PA',
-            UserTypeChoices.SELLER: 'SE',
-            UserTypeChoices.DOCTOR: 'DO',
+            UserTypeChoices.ADMIN: 'QTV',
+            UserTypeChoices.STAFF: 'NV',
+            UserTypeChoices.MANAGER: 'QL',
+            UserTypeChoices.PHARMACY: 'NT',
+            UserTypeChoices.SUPPLIER: 'NCC',
+            UserTypeChoices.PARTNER: 'DT',
+            UserTypeChoices.SELLER: 'BH',
+            UserTypeChoices.DOCTOR: 'BS',
         }.get(type)
     
     
